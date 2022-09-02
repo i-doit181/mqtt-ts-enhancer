@@ -7,8 +7,7 @@ import (
 )
 
 var mqttBroker string
-var topicOngoing string
-var topicOutgoing string
+var topic string
 
 var convertCmd = &cobra.Command{
 	Use:     "start",
@@ -17,22 +16,20 @@ var convertCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
-			"mqtt":          mqttBroker,
-			"topicOngoing":  topicOngoing,
-			"topicOutgoing": topicOutgoing,
+			"mqtt":  mqttBroker,
+			"topic": topic,
 		}).Info("Here the magic happens ")
 		client, err := mqtt.Connect(&mqttBroker)
 		if err != nil {
 			log.WithError(err).Error("Something went wrong!")
 		} else {
-			mqtt.Sub(*client)
+			mqtt.Sub(*client, &topic)
 		}
 	},
 }
 
 func init() {
 	convertCmd.Flags().StringVarP(&mqttBroker, "mqtt", "m", "", "MQTT Broker")
-	convertCmd.Flags().StringVarP(&topicOngoing, "consume", "c", "", "Topic where messages needs to be enhanced")
-	convertCmd.Flags().StringVarP(&topicOutgoing, "produce", "p", "", "Topic where enhanced messages are published")
+	convertCmd.Flags().StringVarP(&topic, "topic", "t", "", "Topic")
 	rootCmd.AddCommand(convertCmd)
 }

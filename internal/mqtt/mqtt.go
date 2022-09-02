@@ -13,6 +13,7 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 		"topic":     msg.Topic(),
 		"messageID": msg.MessageID(),
 	}).Info("Received message\n")
+	//here validate json and add timestamp. Finally publish to other topic
 }
 
 var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
@@ -57,9 +58,8 @@ func Publish(client mqtt.Client) {
 	}
 }
 
-func Sub(client mqtt.Client) {
-	topic := "topic/test"
-	token := client.Subscribe(topic, 1, nil)
+func Sub(client mqtt.Client, topic *string) {
+	token := client.Subscribe(*topic, 1, nil)
 	token.Wait()
-	fmt.Printf("Subscribed to topic: %s", topic)
+	fmt.Printf("Subscribed to topic: %s", *topic)
 }

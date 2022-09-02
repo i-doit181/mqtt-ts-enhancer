@@ -1,10 +1,12 @@
 package mqtt
 
 import (
+	"encoding/base64"
 	"fmt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"strings"
 	"time"
 )
 
@@ -30,10 +32,12 @@ var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err
 	log.WithError(err).Error("Connect lost!")
 }
 
+var escaper = strings.NewReplacer("9", "99", "-", "90", "_", "91")
+
 func Connect(broker *string) (*mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(*broker)
-	opts.SetClientID("mqtt_enhancer" + uuid.NewString())
+	opts.SetClientID("mqtt_enhancer_" + escaper.Replace(base64.RawURLEncoding.EncodeToString([]byte(uuid.NewString()))))
 	opts.OnConnectionLost = connectLostHandler
 	opts.OnConnect = connectHandler
 	opts.OnReconnecting = reconnectHandler

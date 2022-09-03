@@ -1,2 +1,2 @@
-# shelly-ts-enhancer
-Enhance ShellyH&amp;T messages with a timestamp
+# mqtt-ts-enhancer
+Enhance mqtt messages with a timestamp

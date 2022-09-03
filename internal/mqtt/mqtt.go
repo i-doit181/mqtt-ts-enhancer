@@ -2,7 +2,7 @@ package mqtt
 
 import (
 	"encoding/base64"
-	"fmt"
+	"encoding/json"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -14,8 +14,19 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 	log.WithFields(log.Fields{
 		"topic":     msg.Topic(),
 		"messageID": msg.MessageID(),
-	}).Info("Received message\n")
-	//here validate json and add timestamp. Finally publish to other topic
+	}).Debug("Received message")
+	var payloadMap map[string]interface{}
+	err := json.Unmarshal(msg.Payload(), &payloadMap)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"message":   msg.Payload(),
+			"messageID": msg.MessageID(),
+			"topic":     msg.Topic(),
+		}).Fatalf("Message cannot be parsed!")
+	}
+	payloadMap["timestamp"] = time.Now().Unix()
+	newMessage, _ := json.Marshal(payloadMap)
+	publish(client, msg.Topic(), &newMessage)
 }
 
 var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
@@ -38,11 +49,13 @@ func Connect(broker *string) (*mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(*broker)
 	opts.SetClientID("mqtt_enhancer_" + escaper.Replace(base64.RawURLEncoding.EncodeToString([]byte(uuid.NewString()))))
+	opts.SetKeepAlive(5 * time.Second)
 	opts.OnConnectionLost = connectLostHandler
 	opts.OnConnect = connectHandler
 	opts.OnReconnecting = reconnectHandler
 	opts.SetDefaultPublishHandler(messagePubHandler)
 	opts.SetAutoReconnect(true)
+	opts.SetCleanSession(false)
 	//
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -52,18 +65,16 @@ func Connect(broker *string) (*mqtt.Client, error) {
 	return &client, nil
 }
 
-func Publish(client mqtt.Client) {
-	num := 10
-	for i := 0; i < num; i++ {
-		text := fmt.Sprintf("Message %d", i)
-		token := client.Publish("topic/test", 0, false, text)
-		token.Wait()
-		time.Sleep(time.Second)
-	}
+func publish(client mqtt.Client, topic string, message *[]byte) {
+	token := client.Publish(topic+"_extended", 1, true, *message)
+	token.Wait()
+	time.Sleep(time.Second)
 }
 
 func Sub(client mqtt.Client, topic *string) {
 	token := client.Subscribe(*topic, 1, nil)
 	token.Wait()
-	fmt.Printf("Subscribed to topic: %s", *topic)
+	log.WithFields(log.Fields{
+		"topic": *topic,
+	}).Info("Subscribed to topic")
 }

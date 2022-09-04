@@ -1,16 +1,20 @@
 # syntax=docker/dockerfile:1.2
 
+ARG goarch
+
 ## Build
 FROM golang:1.19 AS build
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=${goarch:-amd64}
 WORKDIR /go/src/app
 COPY . .
-RUN apt update -y && apt upgrade -y && \
-    go mod download && \
+RUN go mod download && \
     mkdir -p /mqtt_enhancer
-RUN CGO_ENABLED=0 GOOS=linux go build -o /go/bin/mqtt_enhancer cmd/main.go
+RUN go build -o /go/bin/mqtt_enhancer cmd/main.go
 
 ## Deploy
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static:nonroot-${goarch:-amd64}
 COPY --from=build --chown=nonroot:nonroot /go/bin/mqtt_enhancer /
 ENTRYPOINT ["/mqtt_enhancer"]
 

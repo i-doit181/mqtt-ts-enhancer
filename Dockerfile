@@ -3,7 +3,7 @@
 ARG goarch
 
 ## Build
-FROM golang:1.19 AS build
+FROM golang:1.20 AS build
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=${goarch:-amd64}

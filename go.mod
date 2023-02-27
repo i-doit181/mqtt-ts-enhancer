@@ -3,10 +3,9 @@ module github.com/shelly-ts-enhancer
 go 1.19
 
 require (
-	github.com/at-wat/mqtt-go v0.16.0
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/google/uuid v1.3.0
-	github.com/matryer/is v1.4.0
+	github.com/matryer/is v1.4.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.5.0
 )
